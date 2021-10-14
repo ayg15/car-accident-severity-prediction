@@ -1,1 +1,2 @@
-# car-accident-severity-prediction
+# Car Accidents Analysis & Severity Prediction
+
