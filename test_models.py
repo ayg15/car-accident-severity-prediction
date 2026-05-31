@@ -9,9 +9,8 @@ from modelling_helper_functions import (
 )
 from classification_modelling import (
     train_logistic_regression,
-    train_decision_tree,
-    tune_decision_tree,
-    train_random_forest,
+    train_decision_tree_with_grid_search,
+    train_random_forest_with_grid_search,
     train_bagging_decision_tree,
 )
 import logging
@@ -33,22 +32,12 @@ def get_the_best_model():
     )
 
     # Decision Tree
-    dt_model, dtmetrics = train_decision_tree(
-        X_train,
-        y_train,
-        X_test,
-        y_test,
-        max_depth=3,
-        random_state=42
-    )
-
-    # Hyperparameter tuning for Decision Tree
     param_grid = {
         "max_depth": [3, 5, 7, 9, 11, 13],
         "min_samples_split": [10, 15, 30, 45, 60],
         "min_samples_leaf": [10, 15, 30, 45, 60],
     }
-    best_dt, bestdt_metrics = tune_decision_tree(
+    best_dt, bestdt_metrics = train_decision_tree_with_grid_search(
         X_train, 
         y_train, 
         X_test=X_test, 
@@ -60,16 +49,21 @@ def get_the_best_model():
     )
 
     # Random Forest
-    rf_model, rfmetrics = train_random_forest(
+    param_grid = {
+        'max_depth': [11, 13],
+        'min_samples_split': [15, 30],
+        'min_samples_leaf': [15, 30],
+        'bootstrap': [False]
+    }
+    rf_model, rfmetrics = train_random_forest_with_grid_search(
         X_train,
         y_train,
         X_test,
         y_test,
-        max_depth=13,
-        min_samples_split=15,
-        min_samples_leaf=15,
-        n_jobs=-1,
-        bootstrap=False,
+        param_grid=param_grid,
+        cv=5,
+        scoring='balanced_accuracy',
+        random_state=42
     )
 
     # Bagging Classifier with Decision Tree
@@ -94,11 +88,6 @@ def get_the_best_model():
         ),
         (
             "Decision Tree",
-            dt_model,
-            dtmetrics.get("precision", 0),
-        ),
-        (
-            "Tuned Decision Tree",
             best_dt,
             bestdt_metrics.get("precision", 0),
         ),
