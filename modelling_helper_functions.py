@@ -1,13 +1,6 @@
 import pandas as pd
 import numpy as np
 from sklearn.model_selection import train_test_split
-from sklearn.linear_model import LogisticRegression
-from sklearn.preprocessing import MinMaxScaler
-from sklearn.tree import DecisionTreeClassifier
-from sklearn.model_selection import GridSearchCV
-from sklearn.ensemble import BaggingClassifier
-from sklearn.ensemble import RandomForestClassifier
-from sklearn.metrics import accuracy_score, precision_score, recall_score, f1_score
 
 
 def normalize_wind_direction(df: pd.DataFrame) -> pd.DataFrame:
@@ -226,79 +219,6 @@ def feature_engineer_train_test(X_train, X_test):
     return X_train_fe, X_test_fe
 
 
-def train_logistic_regression(
-    X_train, y_train, X_test=None, y_test=None, scaler=None, max_iter=200
-):
-    """
-    Train a logistic regression model. Optionally scale features.
-    Returns model, train and test predictions, and scaler used.
-    """
-    if scaler is None:
-        scaler = MinMaxScaler()
-        X_train_scaled = scaler.fit_transform(X_train)
-        X_test_scaled = scaler.transform(X_test) if X_test is not None else None
-    else:
-        X_train_scaled = scaler.transform(X_train)
-        X_test_scaled = scaler.transform(X_test) if X_test is not None else None
-
-    model = LogisticRegression(max_iter=max_iter)
-    model.fit(X_train_scaled, y_train)
-
-    y_train_pred = model.predict(X_train_scaled)
-    y_test_pred = model.predict(X_test_scaled) if X_test is not None else None
-
-    metrics = {}
-    if y_test is not None and y_test_pred is not None:
-        metrics["accuracy"] = accuracy_score(y_test, y_test_pred)
-        metrics["precision"] = precision_score(
-            y_test, y_test_pred, average="weighted", zero_division=0
-        )
-        metrics["recall"] = recall_score(
-            y_test, y_test_pred, average="weighted", zero_division=0
-        )
-        metrics["f1"] = f1_score(y_test, y_test_pred, average="weighted")
-
-    return model, y_train_pred, y_test_pred, scaler, metrics
-
-
-def train_decision_tree(X_train, y_train, X_test=None, y_test=None, **kwargs):
-    """
-    Train a Decision Tree classifier. Returns model and predictions.
-    kwargs are passed to DecisionTreeClassifier.
-    """
-    model = DecisionTreeClassifier(**kwargs)
-    model.fit(X_train, y_train)
-
-    y_train_pred = model.predict(X_train)
-    y_test_pred = model.predict(X_test) if X_test is not None else None
-
-    metrics = {}
-    if y_test is not None and y_test_pred is not None:
-        metrics["accuracy"] = accuracy_score(y_test, y_test_pred)
-        metrics["precision"] = precision_score(
-            y_test, y_test_pred, average="weighted", zero_division=0
-        )
-        metrics["recall"] = recall_score(
-            y_test, y_test_pred, average="weighted", zero_division=0
-        )
-        metrics["f1"] = f1_score(y_test, y_test_pred, average="weighted")
-    return model, y_train_pred, y_test_pred, metrics
-
-
-def tune_decision_tree(
-    X_train, y_train, param_grid, cv=5, scoring="accuracy", n_jobs=-1
-):
-    """
-    Perform hyperparameter tuning for DecisionTreeClassifier using GridSearchCV.
-    Returns best estimator and grid search results.
-    """
-    grid = GridSearchCV(
-        DecisionTreeClassifier(), param_grid, cv=cv, scoring=scoring, n_jobs=n_jobs
-    )
-    grid.fit(X_train, y_train)
-    return grid.best_estimator_, grid.cv_results_, grid.best_params_
-
-
 def get_feature_importance(model, feature_names):
     """
     Get feature importances from a fitted tree-based model.
@@ -311,63 +231,3 @@ def get_feature_importance(model, feature_names):
         ).sort_values("importance", ascending=False)
     else:
         raise ValueError("Model does not have feature_importances_ attribute.")
-
-
-def train_random_forest(X_train, y_train, X_test=None, y_test=None, **kwargs):
-    """
-    Train a Random Forest classifier. Returns model and predictions.
-    kwargs are passed to RandomForestClassifier.
-    """
-    model = RandomForestClassifier(**kwargs)
-    model.fit(X_train, y_train)
-
-    y_train_pred = model.predict(X_train)
-    y_test_pred = model.predict(X_test) if X_test is not None else None
-
-    metrics = {}
-    if y_test is not None and y_test_pred is not None:
-        metrics["accuracy"] = accuracy_score(y_test, y_test_pred)
-        metrics["precision"] = precision_score(
-            y_test, y_test_pred, average="weighted", zero_division=0
-        )
-        metrics["recall"] = recall_score(
-            y_test, y_test_pred, average="weighted", zero_division=0
-        )
-        metrics["f1"] = f1_score(y_test, y_test_pred, average="weighted")
-
-    return model, y_train_pred, y_test_pred, metrics
-
-
-def train_bagging_decision_tree(
-    X_train, y_train, X_test=None, y_test=None, dt_params=None, bagging_params=None
-):
-    """
-    Train a BaggingClassifier with DecisionTreeClassifier as base estimator.
-    dt_params: dict for DecisionTreeClassifier
-    bagging_params: dict for BaggingClassifier
-    Returns model and predictions.
-    """
-    if dt_params is None:
-        dt_params = {}
-    if bagging_params is None:
-        bagging_params = {}
-
-    base_estimator = DecisionTreeClassifier(**dt_params)
-    model = BaggingClassifier(base_estimator, **bagging_params)
-    model.fit(X_train, y_train)
-
-    y_train_pred = model.predict(X_train)
-    y_test_pred = model.predict(X_test) if X_test is not None else None
-
-    metrics = {}
-    if y_test is not None and y_test_pred is not None:
-        metrics["accuracy"] = accuracy_score(y_test, y_test_pred)
-        metrics["precision"] = precision_score(
-            y_test, y_test_pred, average="weighted", zero_division=0
-        )
-        metrics["recall"] = recall_score(
-            y_test, y_test_pred, average="weighted", zero_division=0
-        )
-        metrics["f1"] = f1_score(y_test, y_test_pred, average="weighted")
-
-    return model, y_train_pred, y_test_pred, metrics
