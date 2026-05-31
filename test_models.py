@@ -7,7 +7,7 @@ from modelling_helper_functions import (
     split_data,
     feature_engineer_train_test,
 )
-from classification_modelling import (
+from model_training import (
     train_logistic_regression,
     train_decision_tree_with_grid_search,
     train_random_forest_with_grid_search,
